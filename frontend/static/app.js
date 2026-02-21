@@ -1,0 +1,351 @@
+/* Trading Workstation — Frontend JS */
+
+const API = '';  // same origin
+
+// ── State ──
+let currentResults = [];
+let selectedResult = null;
+
+// ── Navigation ──
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+        e.preventDefault();
+        const page = link.dataset.page;
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${page}`).classList.add('active');
+
+        // Load page data
+        if (page === 'strategies') loadStrategies();
+        if (page === 'watchlist') loadWatchlist();
+        if (page === 'settings') loadSettings();
+    });
+});
+
+// ── Dashboard: Run Scan ──
+document.getElementById('btn-run-scan').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-run-scan');
+    const status = document.getElementById('scan-status');
+
+    btn.disabled = true;
+    btn.textContent = 'Scanning...';
+    status.className = 'status-bar loading';
+    status.textContent = 'Fetching market data and running strategies...';
+
+    try {
+        const resp = await fetch(`${API}/api/scan/run`, { method: 'POST' });
+        const data = await resp.json();
+
+        currentResults = data.results;
+        renderResults(currentResults);
+        populateStrategyFilter(currentResults);
+
+        status.className = 'status-bar success';
+        status.textContent = `Scan complete: ${data.count} hit${data.count !== 1 ? 's' : ''} found`;
+    } catch (err) {
+        status.className = 'status-bar error';
+        status.textContent = `Scan failed: ${err.message}`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Scan';
+    }
+});
+
+// ── Dashboard: Filter ──
+document.getElementById('btn-filter').addEventListener('click', loadFilteredResults);
+
+async function loadFilteredResults() {
+    const strategyId = document.getElementById('filter-strategy').value;
+    const dateVal = document.getElementById('filter-date').value;
+
+    let url = `${API}/api/scan/results?`;
+    if (strategyId) url += `strategy_id=${strategyId}&`;
+    if (dateVal) url += `scan_date=${dateVal}&`;
+
+    try {
+        const resp = await fetch(url);
+        const data = await resp.json();
+        currentResults = data.map(r => ({
+            ...r,
+            price: r.price_at_scan,
+            strategy_name: r.strategy_id,
+        }));
+        renderResults(currentResults);
+    } catch (err) {
+        console.error('Filter failed:', err);
+    }
+}
+
+// ── Render scan results table ──
+function renderResults(results) {
+    const tbody = document.querySelector('#results-table tbody');
+    tbody.innerHTML = '';
+
+    if (!results.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No results. Click "Run Scan" to scan the universe.</td></tr>';
+        return;
+    }
+
+    // Check for convergence (tickers appearing in multiple strategies)
+    const tickerCounts = {};
+    results.forEach(r => { tickerCounts[r.ticker] = (tickerCounts[r.ticker] || 0) + 1; });
+
+    results.forEach((r, idx) => {
+        const tr = document.createElement('tr');
+        const sig = r.signal_data || {};
+        const isConvergent = tickerCounts[r.ticker] > 1;
+
+        tr.innerHTML = `
+            <td>${r.ticker}${isConvergent ? ' <span style="color:var(--accent)" title="Multiple strategies">&#9733;</span>' : ''}</td>
+            <td>${r.strategy_name || r.strategy_id}</td>
+            <td>$${(r.price || r.price_at_scan || 0).toFixed(2)}</td>
+            <td>${sig.rs_ratio || '-'}</td>
+            <td>${sig.dist_to_ema8_pct != null ? sig.dist_to_ema8_pct + '%' : '-'}</td>
+            <td>${sig.volume_ratio || '-'}</td>
+            <td>${sig.atr_14 ? '$' + sig.atr_14 : '-'}</td>
+            <td>${r.scan_date || '-'}</td>
+        `;
+
+        tr.addEventListener('click', () => showDetail(r, idx));
+        tbody.appendChild(tr);
+    });
+}
+
+function populateStrategyFilter(results) {
+    const sel = document.getElementById('filter-strategy');
+    const strategies = [...new Set(results.map(r => r.strategy_id))];
+    // Keep "All" option, add discovered strategies
+    sel.innerHTML = '<option value="">All</option>';
+    strategies.forEach(s => {
+        sel.innerHTML += `<option value="${s}">${s}</option>`;
+    });
+}
+
+// ── Detail panel ──
+function showDetail(result, idx) {
+    selectedResult = result;
+    const panel = document.getElementById('detail-panel');
+    panel.classList.remove('hidden');
+
+    // Highlight selected row
+    document.querySelectorAll('#results-table tbody tr').forEach((tr, i) => {
+        tr.classList.toggle('selected', i === idx);
+    });
+
+    const sig = result.signal_data || {};
+    const price = result.price || result.price_at_scan || 0;
+
+    document.getElementById('detail-ticker').textContent = `${result.ticker} — $${price.toFixed(2)}`;
+    document.getElementById('detail-tv-link').href = `https://www.tradingview.com/chart/?symbol=${result.ticker}`;
+
+    // Signal details
+    document.getElementById('detail-signal').innerHTML = `
+        <table>
+            <tr><td>RS Ratio vs SPY</td><td>${sig.rs_ratio || '-'}</td></tr>
+            <tr><td>Stock Return (${sig.rs_lookback || 10}d)</td><td>${sig.stock_return_pct != null ? sig.stock_return_pct + '%' : '-'}</td></tr>
+            <tr><td>SPY Return</td><td>${sig.spy_return_pct != null ? sig.spy_return_pct + '%' : '-'}</td></tr>
+            <tr><td>Volume Ratio</td><td>${sig.volume_ratio || '-'}</td></tr>
+            <tr><td>Description</td><td style="font-size:12px">${result.description || '-'}</td></tr>
+        </table>
+    `;
+
+    // Key levels
+    document.getElementById('detail-levels').innerHTML = `
+        <table>
+            <tr><td>EMA 8</td><td>$${sig.ema_fast || '-'}</td></tr>
+            <tr><td>EMA 21</td><td>$${sig.ema_slow || '-'}</td></tr>
+            <tr><td>50 DMA</td><td>$${sig.dma_50 || '-'}</td></tr>
+            <tr><td>200 DMA</td><td>$${sig.dma_200 || '-'}</td></tr>
+            <tr><td>ATR(14)</td><td>$${sig.atr_14 || '-'}</td></tr>
+            <tr><td>Swing Low (10)</td><td>$${sig.swing_low_10 || '-'}</td></tr>
+            <tr><td>Suggested Stop</td><td>$${sig.suggested_stop || '-'}</td></tr>
+        </table>
+    `;
+
+    // Pre-fill risk calculator
+    document.getElementById('rc-entry').value = price.toFixed(2);
+    document.getElementById('rc-stop').value = sig.suggested_stop || '';
+    // Default target: 2R from suggested stop
+    const risk = price - (sig.suggested_stop || price);
+    document.getElementById('rc-target').value = risk > 0 ? (price + 2 * risk).toFixed(2) : '';
+
+    // Clear previous risk result
+    document.getElementById('risk-result').innerHTML = '';
+}
+
+document.getElementById('detail-close').addEventListener('click', () => {
+    document.getElementById('detail-panel').classList.add('hidden');
+    document.querySelectorAll('#results-table tbody tr').forEach(tr => tr.classList.remove('selected'));
+    selectedResult = null;
+});
+
+// ── Risk Calculator ──
+document.getElementById('btn-calc-risk').addEventListener('click', async () => {
+    const entry = parseFloat(document.getElementById('rc-entry').value);
+    const stop = parseFloat(document.getElementById('rc-stop').value);
+    const target = parseFloat(document.getElementById('rc-target').value);
+
+    if (isNaN(entry) || isNaN(stop) || isNaN(target)) {
+        document.getElementById('risk-result').innerHTML = '<span class="negative">Fill in entry, stop, and target.</span>';
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API}/api/candidates/calculate-risk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entry_price: entry, stop_loss: stop, target_1: target }),
+        });
+        const calc = await resp.json();
+
+        const targets = calc.r_targets || {};
+        document.getElementById('risk-result').innerHTML = `
+            <table>
+                <tr><td>Risk/Share</td><td class="negative">$${calc.risk_per_share}</td></tr>
+                <tr><td>Reward/Share</td><td class="positive">$${calc.reward_per_share}</td></tr>
+                <tr><td>R-Multiple</td><td>${calc.r_multiple}R</td></tr>
+                <tr><td>Position Size</td><td>${calc.position_size} shares</td></tr>
+                <tr><td>$ at Risk</td><td class="negative">$${calc.dollar_risk}</td></tr>
+                <tr><td>$ Reward</td><td class="positive">$${calc.dollar_reward}</td></tr>
+                <tr><td>Account Risk</td><td>${(calc.account_risk_pct * 100).toFixed(2)}%</td></tr>
+                <tr><td>1R Target</td><td>$${targets['1R'] || '-'}</td></tr>
+                <tr><td>2R Target</td><td>$${targets['2R'] || '-'}</td></tr>
+                <tr><td>3R Target</td><td>$${targets['3R'] || '-'}</td></tr>
+            </table>
+        `;
+    } catch (err) {
+        document.getElementById('risk-result').innerHTML = `<span class="negative">Error: ${err.message}</span>`;
+    }
+});
+
+// ── Bookmark ──
+document.getElementById('btn-bookmark').addEventListener('click', async () => {
+    if (!selectedResult) return;
+
+    const stop = parseFloat(document.getElementById('rc-stop').value);
+    const target = parseFloat(document.getElementById('rc-target').value);
+    const scanResultId = selectedResult.id;
+
+    if (isNaN(stop) || isNaN(target) || !scanResultId) {
+        alert('Set stop and target first, then bookmark.');
+        return;
+    }
+
+    try {
+        const resp = await fetch(`${API}/api/candidates/bookmark`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ scan_result_id: scanResultId, stop_loss: stop, target_1: target }),
+        });
+        const data = await resp.json();
+        alert(`Bookmarked! Position: ${data.risk_calc.position_size} shares, R: ${data.risk_calc.r_multiple}`);
+    } catch (err) {
+        alert(`Bookmark failed: ${err.message}`);
+    }
+});
+
+// ── Strategies page ──
+async function loadStrategies() {
+    try {
+        const resp = await fetch(`${API}/api/strategies`);
+        const data = await resp.json();
+        const container = document.getElementById('strategies-list');
+        container.innerHTML = '';
+
+        data.forEach(s => {
+            const card = document.createElement('div');
+            card.className = 'strategy-card';
+            card.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <h3>${s.name}</h3>
+                    <span class="badge ${s.is_active ? 'badge-active' : 'badge-inactive'}">
+                        ${s.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                </div>
+                <p class="meta">${s.source || ''}</p>
+                <p>${s.description}</p>
+                <p class="params">${JSON.stringify(s.parameters, null, 1)}</p>
+                <button class="btn btn-small" style="margin-top:8px" onclick="toggleStrategy('${s.id}')">
+                    ${s.is_active ? 'Deactivate' : 'Activate'}
+                </button>
+            `;
+            container.appendChild(card);
+        });
+    } catch (err) {
+        console.error('Failed to load strategies:', err);
+    }
+}
+
+async function toggleStrategy(id) {
+    await fetch(`${API}/api/strategies/${id}/toggle`, { method: 'PATCH' });
+    loadStrategies();
+}
+
+// ── Watchlist page ──
+async function loadWatchlist() {
+    try {
+        const resp = await fetch(`${API}/api/candidates`);
+        const data = await resp.json();
+        const tbody = document.querySelector('#watchlist-table tbody');
+        tbody.innerHTML = '';
+
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No bookmarked candidates yet.</td></tr>';
+            return;
+        }
+
+        data.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${c.ticker}</td>
+                <td>$${c.entry_price.toFixed(2)}</td>
+                <td>$${c.stop_loss.toFixed(2)}</td>
+                <td>$${c.target_1.toFixed(2)}</td>
+                <td>${c.r_multiple.toFixed(2)}R</td>
+                <td>${c.position_size}</td>
+                <td>$${(c.risk_per_share * c.position_size).toFixed(2)}</td>
+                <td>${c.status}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error('Failed to load watchlist:', err);
+    }
+}
+
+// ── Settings page ──
+async function loadSettings() {
+    try {
+        const resp = await fetch(`${API}/api/settings/account`);
+        const data = await resp.json();
+        document.getElementById('set-account-size').value = data.account_size;
+        document.getElementById('set-risk-pct').value = (data.risk_per_trade * 100).toFixed(1);
+        document.getElementById('set-max-pos').value = data.max_positions;
+    } catch (err) {
+        console.error('Failed to load settings:', err);
+    }
+}
+
+document.getElementById('btn-save-settings').addEventListener('click', async () => {
+    const size = parseFloat(document.getElementById('set-account-size').value);
+    const riskPct = parseFloat(document.getElementById('set-risk-pct').value) / 100;
+    const maxPos = parseInt(document.getElementById('set-max-pos').value);
+
+    try {
+        const resp = await fetch(`${API}/api/settings/account`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account_size: size, risk_per_trade: riskPct, max_positions: maxPos }),
+        });
+        const data = await resp.json();
+        document.getElementById('settings-status').innerHTML =
+            `<span style="color:var(--green)">Saved! Account: $${size.toLocaleString()}</span>`;
+    } catch (err) {
+        document.getElementById('settings-status').innerHTML =
+            `<span class="negative">Save failed: ${err.message}</span>`;
+    }
+});
+
+// ── Load last results on page load ──
+loadFilteredResults();

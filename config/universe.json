@@ -1,0 +1,9 @@
+{
+  "description": "Test universe — 20 liquid large-caps across sectors",
+  "tickers": [
+    "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN",
+    "META", "TSLA", "JPM", "V", "UNH",
+    "XOM", "JNJ", "HD", "PG", "MA",
+    "COST", "ABBV", "CRM", "LLY", "AVGO"
+  ]
+}

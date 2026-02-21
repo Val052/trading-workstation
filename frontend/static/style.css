@@ -1,0 +1,301 @@
+/* Trading Workstation — clean, functional, dark theme */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --bg: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-card: #1f2b47;
+    --text: #e0e0e0;
+    --text-muted: #8892a4;
+    --accent: #4fc3f7;
+    --green: #66bb6a;
+    --red: #ef5350;
+    --border: #2a3a5c;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 200px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    flex-shrink: 0;
+}
+
+.sidebar h2 {
+    padding: 0 20px 20px;
+    font-size: 16px;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+}
+
+.sidebar ul { list-style: none; }
+
+.sidebar li a {
+    display: block;
+    padding: 10px 20px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.15s;
+}
+
+.sidebar li a:hover,
+.sidebar li a.active {
+    color: var(--text);
+    background: var(--bg-card);
+    border-left: 3px solid var(--accent);
+}
+
+/* Content */
+.content {
+    flex: 1;
+    padding: 24px;
+    overflow-x: auto;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+h1 { font-size: 22px; font-weight: 600; }
+h2 { font-size: 18px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--accent); }
+
+/* Buttons */
+.btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+}
+
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 600;
+}
+
+.btn-primary:hover { opacity: 0.85; color: var(--bg); }
+.btn-small { padding: 4px 10px; font-size: 12px; }
+
+/* Status bar */
+.status-bar {
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    min-height: 20px;
+}
+
+.status-bar.loading { background: var(--bg-card); color: var(--accent); }
+.status-bar.success { background: #1b3a2a; color: var(--green); }
+.status-bar.error { background: #3a1b1b; color: var(--red); }
+
+/* Filter bar */
+.filter-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 10px;
+    background: var(--bg-card);
+    border-radius: 4px;
+}
+
+.filter-bar label { font-size: 13px; color: var(--text-muted); }
+
+.filter-bar select,
+.filter-bar input[type="date"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+/* Data tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.data-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr {
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.data-table tbody tr:hover { background: var(--bg-card); }
+.data-table tbody tr.selected { background: var(--bg-card); border-left: 3px solid var(--accent); }
+
+/* Detail panel */
+.detail-panel {
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.detail-panel.hidden { display: none; }
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-header h2 { flex: 1; }
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.detail-section {
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.detail-section table {
+    width: 100%;
+    font-size: 13px;
+}
+
+.detail-section table td {
+    padding: 3px 0;
+    border: none;
+}
+
+.detail-section table td:first-child {
+    color: var(--text-muted);
+    width: 50%;
+}
+
+/* Forms */
+.form-row {
+    margin-bottom: 12px;
+}
+
+.form-row label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.form-row input,
+.settings-form input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 4px;
+    width: 120px;
+    margin-top: 4px;
+}
+
+#risk-result {
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+#risk-result table td { padding: 2px 8px 2px 0; border: none; }
+#risk-result .positive { color: var(--green); }
+#risk-result .negative { color: var(--red); }
+
+/* Strategy cards */
+.strategy-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.strategy-card h3 { margin-bottom: 4px; }
+.strategy-card .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.strategy-card .params { font-size: 12px; font-family: monospace; color: var(--text-muted); }
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-active { background: #1b3a2a; color: var(--green); }
+.badge-inactive { background: #3a1b1b; color: var(--red); }
+
+/* Settings */
+.settings-form {
+    max-width: 400px;
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.settings-form input { width: 200px; }
+
+#settings-status {
+    margin-top: 10px;
+    font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .detail-grid { grid-template-columns: 1fr; }
+}

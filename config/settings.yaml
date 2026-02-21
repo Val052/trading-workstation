@@ -1,0 +1,13 @@
+account:
+  size: 10000
+  risk_per_trade: 0.005  # 0.5%
+  max_positions: 5
+
+scanner:
+  universe: "custom"  # "sp500", "custom", or "sector_etfs"
+  custom_tickers: []  # populated from universe.json when universe is "custom"
+  auto_run_time: "08:00"
+
+strategies:
+  active:
+    - ema_pullback_rs
