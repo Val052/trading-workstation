@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
@@ -16,6 +16,8 @@ class ScanHit:
     ticker: str
     price: float
     signal_data: dict = field(default_factory=dict)
+    near_miss: bool = False          # True if passed all but one filter
+    failed_filter: str = ""          # which filter it failed (for near misses)
 
 
 class BaseStrategy(ABC):
@@ -32,14 +34,15 @@ class BaseStrategy(ABC):
     description: str      # what the strategy looks for
     source: str           # where you learned it
     parameters: dict      # configurable thresholds with defaults
-    references: list[str] = []
+    references: list = []
 
     @abstractmethod
-    def scan(self, universe: list[str], market_data: dict[str, pd.DataFrame]) -> list[ScanHit]:
+    def scan(self, universe: list, market_data: dict) -> list:
         """
         Run the scan against a universe of tickers.
         market_data maps ticker -> OHLCV DataFrame.
         Returns list of ScanHit for tickers that match criteria.
+        Include near-miss hits with near_miss=True.
         """
         ...
 

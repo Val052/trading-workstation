@@ -4,6 +4,7 @@ const API = '';  // same origin
 
 // ── State ──
 let currentResults = [];
+let currentNearMisses = [];
 let selectedResult = null;
 
 // ── Navigation ──
@@ -16,7 +17,6 @@ document.querySelectorAll('.nav-link').forEach(link => {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(`page-${page}`).classList.add('active');
 
-        // Load page data
         if (page === 'strategies') loadStrategies();
         if (page === 'watchlist') loadWatchlist();
         if (page === 'settings') loadSettings();
@@ -31,18 +31,22 @@ document.getElementById('btn-run-scan').addEventListener('click', async () => {
     btn.disabled = true;
     btn.textContent = 'Scanning...';
     status.className = 'status-bar loading';
-    status.textContent = 'Fetching market data and running strategies...';
+    status.textContent = 'Fetching market data and running strategies (this may take a few minutes for full S&P 500)...';
 
     try {
         const resp = await fetch(`${API}/api/scan/run`, { method: 'POST' });
         const data = await resp.json();
 
-        currentResults = data.results;
-        renderResults(currentResults);
-        populateStrategyFilter(currentResults);
+        currentResults = data.results || [];
+        currentNearMisses = data.near_misses || [];
 
+        renderResults(currentResults);
+        renderNearMisses(currentNearMisses);
+        populateStrategyFilter(currentResults.concat(currentNearMisses));
+
+        const nmText = data.near_miss_count ? `, ${data.near_miss_count} near-miss${data.near_miss_count !== 1 ? 'es' : ''}` : '';
         status.className = 'status-bar success';
-        status.textContent = `Scan complete: ${data.count} hit${data.count !== 1 ? 's' : ''} found`;
+        status.textContent = `Scan complete: ${data.count} hit${data.count !== 1 ? 's' : ''}${nmText}`;
     } catch (err) {
         status.className = 'status-bar error';
         status.textContent = `Scan failed: ${err.message}`;
@@ -72,6 +76,8 @@ async function loadFilteredResults() {
             strategy_name: r.strategy_id,
         }));
         renderResults(currentResults);
+        // Near misses not stored in DB, so hide section when filtering history
+        document.getElementById('near-misses-section').classList.add('hidden');
     } catch (err) {
         console.error('Filter failed:', err);
     }
@@ -100,9 +106,9 @@ function renderResults(results) {
             <td>${r.ticker}${isConvergent ? ' <span style="color:var(--accent)" title="Multiple strategies">&#9733;</span>' : ''}</td>
             <td>${r.strategy_name || r.strategy_id}</td>
             <td>$${(r.price || r.price_at_scan || 0).toFixed(2)}</td>
-            <td>${sig.rs_ratio || '-'}</td>
-            <td>${sig.dist_to_ema8_pct != null ? sig.dist_to_ema8_pct + '%' : '-'}</td>
-            <td>${sig.volume_ratio || '-'}</td>
+            <td>${sig.rs_ratio != null ? sig.rs_ratio : (sig.sector_rs != null ? sig.sector_rs : '-')}</td>
+            <td>${formatKeyMetric(sig)}</td>
+            <td>${sig.volume_ratio || (sig.sector ? sig.sector : '-')}</td>
             <td>${sig.atr_14 ? '$' + sig.atr_14 : '-'}</td>
             <td>${r.scan_date || '-'}</td>
         `;
@@ -112,10 +118,57 @@ function renderResults(results) {
     });
 }
 
+function formatKeyMetric(sig) {
+    // Show the most relevant metric per strategy type
+    if (sig.dist_to_ema8_pct != null) return sig.dist_to_ema8_pct + '% EMA8';
+    if (sig.dist_to_avwap_pct != null) return sig.dist_to_avwap_pct + '% AVWAP';
+    if (sig.sector_rank != null) return '#' + sig.sector_rank + ' sector';
+    return '-';
+}
+
+// ── Render near misses ──
+function renderNearMisses(nearMisses) {
+    const section = document.getElementById('near-misses-section');
+    const tbody = document.querySelector('#near-misses-table tbody');
+    const countBadge = document.getElementById('near-miss-count');
+
+    if (!nearMisses.length) {
+        section.classList.add('hidden');
+        return;
+    }
+
+    section.classList.remove('hidden');
+    countBadge.textContent = nearMisses.length;
+    tbody.innerHTML = '';
+
+    nearMisses.forEach((r, idx) => {
+        const tr = document.createElement('tr');
+        const sig = r.signal_data || {};
+
+        tr.innerHTML = `
+            <td>${r.ticker}</td>
+            <td>${r.strategy_name || r.strategy_id}</td>
+            <td>$${(r.price || 0).toFixed(2)}</td>
+            <td><span class="failed-filter">${r.failed_filter || '?'}</span></td>
+            <td>${sig.rs_ratio != null ? sig.rs_ratio : '-'}</td>
+            <td style="font-size:12px">${formatKeyMetric(sig)}</td>
+        `;
+
+        tr.addEventListener('click', () => showDetail(r, -1));
+        tbody.appendChild(tr);
+    });
+}
+
+// Near-miss toggle
+document.getElementById('near-misses-toggle').addEventListener('click', function() {
+    this.classList.toggle('collapsed');
+    const table = document.getElementById('near-misses-table');
+    table.style.display = this.classList.contains('collapsed') ? 'none' : '';
+});
+
 function populateStrategyFilter(results) {
     const sel = document.getElementById('filter-strategy');
     const strategies = [...new Set(results.map(r => r.strategy_id))];
-    // Keep "All" option, add discovered strategies
     sel.innerHTML = '<option value="">All</option>';
     strategies.forEach(s => {
         sel.innerHTML += `<option value="${s}">${s}</option>`;
@@ -136,41 +189,48 @@ function showDetail(result, idx) {
     const sig = result.signal_data || {};
     const price = result.price || result.price_at_scan || 0;
 
-    document.getElementById('detail-ticker').textContent = `${result.ticker} — $${price.toFixed(2)}`;
+    let titleExtra = '';
+    if (result.near_miss) titleExtra = ` [near miss: ${result.failed_filter}]`;
+
+    document.getElementById('detail-ticker').textContent = `${result.ticker} — $${price.toFixed(2)}${titleExtra}`;
     document.getElementById('detail-tv-link').href = `https://www.tradingview.com/chart/?symbol=${result.ticker}`;
 
-    // Signal details
-    document.getElementById('detail-signal').innerHTML = `
-        <table>
-            <tr><td>RS Ratio vs SPY</td><td>${sig.rs_ratio || '-'}</td></tr>
-            <tr><td>Stock Return (${sig.rs_lookback || 10}d)</td><td>${sig.stock_return_pct != null ? sig.stock_return_pct + '%' : '-'}</td></tr>
-            <tr><td>SPY Return</td><td>${sig.spy_return_pct != null ? sig.spy_return_pct + '%' : '-'}</td></tr>
-            <tr><td>Volume Ratio</td><td>${sig.volume_ratio || '-'}</td></tr>
-            <tr><td>Description</td><td style="font-size:12px">${result.description || '-'}</td></tr>
-        </table>
-    `;
+    // Signal details — adapt based on what's available
+    let signalHtml = '<table>';
+    if (sig.rs_ratio != null) signalHtml += `<tr><td>RS Ratio vs SPY</td><td>${sig.rs_ratio}</td></tr>`;
+    if (sig.stock_return_pct != null) signalHtml += `<tr><td>Stock Return</td><td>${sig.stock_return_pct}%</td></tr>`;
+    if (sig.spy_return_pct != null) signalHtml += `<tr><td>SPY Return</td><td>${sig.spy_return_pct}%</td></tr>`;
+    if (sig.volume_ratio != null) signalHtml += `<tr><td>Volume Ratio</td><td>${sig.volume_ratio}</td></tr>`;
+    if (sig.sector) signalHtml += `<tr><td>Sector</td><td>${sig.sector} (${sig.sector_etf})</td></tr>`;
+    if (sig.sector_rs != null) signalHtml += `<tr><td>Sector RS</td><td>${sig.sector_rs}</td></tr>`;
+    if (sig.sector_rank != null) signalHtml += `<tr><td>Sector Rank</td><td>#${sig.sector_rank}</td></tr>`;
+    if (sig.anchor_type) signalHtml += `<tr><td>AVWAP Anchor</td><td>${sig.anchor_type} (${sig.anchor_date})</td></tr>`;
+    if (sig.avwap != null) signalHtml += `<tr><td>AVWAP Level</td><td>$${sig.avwap}</td></tr>`;
+    if (sig.dist_to_avwap_pct != null) signalHtml += `<tr><td>Dist to AVWAP</td><td>${sig.dist_to_avwap_pct}%</td></tr>`;
+    if (sig.price_vs_avwap) signalHtml += `<tr><td>Price vs AVWAP</td><td>${sig.price_vs_avwap}</td></tr>`;
+    if (result.description) signalHtml += `<tr><td colspan="2" style="font-size:12px;padding-top:8px">${result.description}</td></tr>`;
+    signalHtml += '</table>';
+    document.getElementById('detail-signal').innerHTML = signalHtml;
 
     // Key levels
-    document.getElementById('detail-levels').innerHTML = `
-        <table>
-            <tr><td>EMA 8</td><td>$${sig.ema_fast || '-'}</td></tr>
-            <tr><td>EMA 21</td><td>$${sig.ema_slow || '-'}</td></tr>
-            <tr><td>50 DMA</td><td>$${sig.dma_50 || '-'}</td></tr>
-            <tr><td>200 DMA</td><td>$${sig.dma_200 || '-'}</td></tr>
-            <tr><td>ATR(14)</td><td>$${sig.atr_14 || '-'}</td></tr>
-            <tr><td>Swing Low (10)</td><td>$${sig.swing_low_10 || '-'}</td></tr>
-            <tr><td>Suggested Stop</td><td>$${sig.suggested_stop || '-'}</td></tr>
-        </table>
-    `;
+    let levelsHtml = '<table>';
+    if (sig.ema_fast != null) levelsHtml += `<tr><td>EMA 8</td><td>$${sig.ema_fast}</td></tr>`;
+    if (sig.ema_slow != null) levelsHtml += `<tr><td>EMA 21</td><td>$${sig.ema_slow}</td></tr>`;
+    if (sig.dma_50 != null) levelsHtml += `<tr><td>50 DMA</td><td>$${sig.dma_50}</td></tr>`;
+    if (sig.dma_200 != null) levelsHtml += `<tr><td>200 DMA</td><td>$${sig.dma_200}</td></tr>`;
+    if (sig.avwap != null) levelsHtml += `<tr><td>AVWAP</td><td>$${sig.avwap}</td></tr>`;
+    if (sig.atr_14 != null) levelsHtml += `<tr><td>ATR(14)</td><td>$${sig.atr_14}</td></tr>`;
+    if (sig.swing_low_10 != null) levelsHtml += `<tr><td>Swing Low (10)</td><td>$${sig.swing_low_10}</td></tr>`;
+    if (sig.suggested_stop != null) levelsHtml += `<tr><td>Suggested Stop</td><td>$${sig.suggested_stop}</td></tr>`;
+    levelsHtml += '</table>';
+    document.getElementById('detail-levels').innerHTML = levelsHtml;
 
     // Pre-fill risk calculator
     document.getElementById('rc-entry').value = price.toFixed(2);
     document.getElementById('rc-stop').value = sig.suggested_stop || '';
-    // Default target: 2R from suggested stop
     const risk = price - (sig.suggested_stop || price);
     document.getElementById('rc-target').value = risk > 0 ? (price + 2 * risk).toFixed(2) : '';
 
-    // Clear previous risk result
     document.getElementById('risk-result').innerHTML = '';
 }
 
@@ -228,7 +288,7 @@ document.getElementById('btn-bookmark').addEventListener('click', async () => {
     const scanResultId = selectedResult.id;
 
     if (isNaN(stop) || isNaN(target) || !scanResultId) {
-        alert('Set stop and target first, then bookmark.');
+        alert('Set stop and target first, then bookmark. (Near misses cannot be bookmarked.)');
         return;
     }
 

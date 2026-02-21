@@ -19,8 +19,15 @@ def run_scanner(
     db: Session = Depends(get_db),
 ):
     """Run all active strategies (or specified ones) against the universe."""
-    results = run_scan(db, strategy_ids=strategy_ids)
-    return {"count": len(results), "results": results}
+    scan_output = run_scan(db, strategy_ids=strategy_ids)
+    results = scan_output["results"]
+    near_misses = scan_output["near_misses"]
+    return {
+        "count": len(results),
+        "results": results,
+        "near_miss_count": len(near_misses),
+        "near_misses": near_misses,
+    }
 
 
 @router.get("/results")
