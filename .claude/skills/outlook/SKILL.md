@@ -1,3 +1,9 @@
+---
+name: outlook
+description: Macro market views across equities, crypto, commodities, forex, and volatility. Fetches current data and compares to stored views. Use when the user asks about market conditions or macro outlook.
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, WebSearch, WebFetch
+---
+
 # /outlook — Macro Market Views
 
 **Type**: User-facing command

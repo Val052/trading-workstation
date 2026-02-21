@@ -1,3 +1,8 @@
+---
+name: fundamental
+description: Internal fundamental analysis engine. Scores valuation, quality, growth, and financial health (Piotroski, Altman Z) on 0-10 scale. Referenced by the analyze skill.
+---
+
 # Fundamental Analysis — Internal Skill
 
 **Type**: Internal (called by `/analyze`, not directly by user)

@@ -1,3 +1,9 @@
+---
+name: screen
+description: Stock screener with presets (value, growth, momentum, dividend, quality). Bridges terminal with the web app scanner. Use when the user wants to screen or find stocks matching criteria.
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, WebSearch, WebFetch
+---
+
 # /screen — Stock Screener Bridge
 
 **Type**: User-facing command

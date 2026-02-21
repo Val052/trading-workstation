@@ -1,3 +1,8 @@
+---
+name: risk
+description: Internal risk assessment engine. Calculates volatility, stop-loss, position sizing (2% rule), R-multiples, and concentration checks on 0-5 scale. Referenced by the analyze skill.
+---
+
 # Risk Assessment & Position Sizing — Internal Skill
 
 **Type**: Internal (called by `/analyze`, not directly by user)

@@ -1,3 +1,9 @@
+---
+name: watchlist
+description: Manage watchlist of tickers with target entry prices. Track prices, alert when targets reached, add/remove tickers. Use when the user wants to manage their watchlist.
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep
+---
+
 # /watchlist — Target Tracking
 
 **Type**: User-facing command

@@ -1,3 +1,8 @@
+---
+name: data-fetcher
+description: Internal data acquisition skill with MCP/yfinance/web failover. Referenced by analyze, portfolio, outlook, and other skills. Not user-invocable.
+---
+
 # Data Fetcher — Data Acquisition with Failover
 
 **Type**: Internal skill (called by other skills, not directly by user)

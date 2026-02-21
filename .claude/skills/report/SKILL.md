@@ -1,3 +1,8 @@
+---
+name: report
+description: Internal report compilation skill. Assembles all analysis outputs into a structured research report with composite scoring. Referenced by the analyze skill.
+---
+
 # Report Compilation — Internal Skill
 
 **Type**: Internal (called by `/analyze` after all other skills complete)

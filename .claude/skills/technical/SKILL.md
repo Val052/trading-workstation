@@ -1,3 +1,8 @@
+---
+name: technical
+description: Internal technical analysis engine. Scores trend, momentum, volume, levels, and patterns on 0-10 scale. Referenced by the analyze skill.
+---
+
 # Technical Analysis — Internal Skill
 
 **Type**: Internal (called by `/analyze`, not directly by user)

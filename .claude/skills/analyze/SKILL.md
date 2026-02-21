@@ -1,3 +1,9 @@
+---
+name: analyze
+description: Deep-dive research report on a ticker. Runs technical, fundamental, sentiment, and risk analysis with weighted composite scoring. Use when the user wants to analyze a stock or security.
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep, WebSearch, WebFetch
+---
+
 # /analyze — Lead Orchestrator
 
 **Type**: User-facing command

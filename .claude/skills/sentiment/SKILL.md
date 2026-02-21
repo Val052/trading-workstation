@@ -1,3 +1,8 @@
+---
+name: sentiment
+description: Internal sentiment and catalyst analysis. Scores news, analyst consensus, and upcoming events on 0-5 scale. Referenced by the analyze skill.
+---
+
 # Sentiment & Catalysts — Internal Skill
 
 **Type**: Internal (called by `/analyze`, not directly by user)

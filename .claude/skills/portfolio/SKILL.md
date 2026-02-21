@@ -1,3 +1,9 @@
+---
+name: portfolio
+description: View current holdings with live P/L, stop/target alerts, and portfolio summary. Use when the user asks about their positions, portfolio, or holdings.
+allowed-tools: Bash, Read, Write, Edit, Glob, Grep
+---
+
 # /portfolio — Holdings Tracker
 
 **Type**: User-facing command
