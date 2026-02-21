@@ -8,3 +8,5 @@ data/
 *.egg-info/
 dist/
 build/
+memory/reports/*.md
+!memory/reports/.gitkeep

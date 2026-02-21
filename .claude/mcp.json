@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "financial-data": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/financial-data-mcp"],
+      "description": "Live financial market data — quotes, technicals, fundamentals, news. NOTE: Package name is a placeholder. Research available financial MCP servers before enabling. System works without MCP via yfinance fallback.",
+      "disabled": true
+    }
+  }
+}
