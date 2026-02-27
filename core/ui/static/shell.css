@@ -363,8 +363,119 @@ input, select {
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
+/* ── Portfolio-specific ── */
+
+/* Summary bar */
+.portfolio-summary-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.summary-metric {
+    flex: 1;
+    padding: 14px 16px;
+    border-right: 1px solid var(--border);
+    text-align: center;
+}
+
+.summary-metric:last-child { border-right: none; }
+
+.metric-label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.metric-value {
+    display: block;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Analytics grid */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.analytics-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.analytics-card table { width: 100%; font-size: 13px; }
+.analytics-card table td { padding: 4px 0; border: none; }
+.analytics-card table td:first-child { color: var(--text-muted); width: 50%; }
+
+/* Allocation bar charts */
+.alloc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.alloc-label {
+    width: 100px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.alloc-bar-bg {
+    flex: 1;
+    height: 16px;
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.alloc-bar {
+    height: 100%;
+    border-radius: 3px;
+    min-width: 2px;
+    transition: width 0.3s;
+}
+
+.alloc-pct {
+    width: 45px;
+    text-align: right;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Add holding form */
+.add-holding-form {
+    max-width: 500px;
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.add-holding-form input,
+.add-holding-form select { width: 250px; }
+
 /* Responsive */
 @media (max-width: 900px) {
     .detail-grid { grid-template-columns: 1fr; }
     .shell-sidebar { width: 160px; }
+    .analytics-grid { grid-template-columns: 1fr; }
+    .portfolio-summary-bar { flex-wrap: wrap; }
+    .summary-metric { min-width: 33%; }
 }

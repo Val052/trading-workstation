@@ -1,0 +1,210 @@
+<!-- Portfolio Module Panel -->
+<div id="portfolio-panel">
+    <!-- Module sub-navigation -->
+    <div class="module-tabs">
+        <button class="module-tab active" data-tab="holdings">Holdings</button>
+        <button class="module-tab" data-tab="analytics">Analytics</button>
+        <button class="module-tab" data-tab="snapshots">Snapshots</button>
+        <button class="module-tab" data-tab="add-holding">Add Holding</button>
+    </div>
+
+    <!-- Holdings tab -->
+    <div id="tab-holdings" class="tab-content active">
+        <div class="page-header">
+            <h1>Portfolio Holdings</h1>
+            <div style="display:flex;gap:8px">
+                <button id="btn-refresh-prices" class="btn btn-primary">Refresh Prices</button>
+                <button id="btn-take-snapshot" class="btn">Take Snapshot</button>
+            </div>
+        </div>
+
+        <!-- Summary bar -->
+        <div class="portfolio-summary-bar">
+            <div class="summary-metric">
+                <span class="metric-label">Total Value</span>
+                <span class="metric-value" id="total-value">--</span>
+            </div>
+            <div class="summary-metric">
+                <span class="metric-label">Total Cost</span>
+                <span class="metric-value" id="total-cost">--</span>
+            </div>
+            <div class="summary-metric">
+                <span class="metric-label">P&L</span>
+                <span class="metric-value" id="total-pnl">--</span>
+            </div>
+            <div class="summary-metric">
+                <span class="metric-label">P&L %</span>
+                <span class="metric-value" id="total-pnl-pct">--</span>
+            </div>
+            <div class="summary-metric">
+                <span class="metric-label">Holdings</span>
+                <span class="metric-value" id="holdings-count">--</span>
+            </div>
+        </div>
+
+        <div id="portfolio-status" class="status-bar"></div>
+
+        <table id="holdings-table" class="data-table">
+            <thead>
+                <tr>
+                    <th data-sort="name">Instrument</th>
+                    <th data-sort="asset_class">Type</th>
+                    <th data-sort="shares">Shares</th>
+                    <th data-sort="current_price">Price</th>
+                    <th data-sort="market_value">Value</th>
+                    <th data-sort="unrealized_pnl">P&L</th>
+                    <th data-sort="unrealized_pnl_pct">P&L %</th>
+                    <th data-sort="vs_50dma_pct">vs 50DMA</th>
+                    <th data-sort="vs_200dma_pct">vs 200DMA</th>
+                    <th data-sort="rs_vs_spy">RS</th>
+                    <th data-sort="trend">Trend</th>
+                    <th data-sort="account_label">Account</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <!-- Holding detail panel -->
+        <div id="holding-detail" class="detail-panel hidden">
+            <div class="detail-header">
+                <h2 id="holding-detail-title"></h2>
+                <button id="holding-detail-close" class="btn btn-small">Close</button>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-section">
+                    <h3>Position</h3>
+                    <div id="holding-position-info"></div>
+                </div>
+                <div class="detail-section">
+                    <h3>Market Data</h3>
+                    <div id="holding-market-info"></div>
+                </div>
+                <div class="detail-section">
+                    <h3>Technicals</h3>
+                    <div id="holding-tech-info"></div>
+                </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+                <button id="btn-edit-holding" class="btn btn-small">Edit</button>
+                <button id="btn-delete-holding" class="btn btn-small" style="color:var(--red)">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics tab -->
+    <div id="tab-analytics" class="tab-content">
+        <h1>Portfolio Analytics</h1>
+        <div id="analytics-status" class="status-bar"></div>
+
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <h3>Asset Class Allocation</h3>
+                <div id="alloc-asset-class"></div>
+            </div>
+            <div class="analytics-card">
+                <h3>Sector Allocation</h3>
+                <div id="alloc-sector"></div>
+            </div>
+            <div class="analytics-card">
+                <h3>Account Allocation</h3>
+                <div id="alloc-account"></div>
+            </div>
+            <div class="analytics-card">
+                <h3>Currency Exposure</h3>
+                <div id="alloc-currency"></div>
+            </div>
+        </div>
+
+        <div class="analytics-grid" style="margin-top:20px">
+            <div class="analytics-card">
+                <h3>Concentration</h3>
+                <div id="concentration-info"></div>
+            </div>
+            <div class="analytics-card">
+                <h3>Market Breadth</h3>
+                <div id="breadth-info"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Snapshots tab -->
+    <div id="tab-snapshots" class="tab-content">
+        <h1>Historical Snapshots</h1>
+        <table id="snapshots-table" class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Total Value</th>
+                    <th>Total Cost</th>
+                    <th>P&L</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Add Holding tab -->
+    <div id="tab-add-holding" class="tab-content">
+        <h1>Add Holding</h1>
+        <div class="add-holding-form">
+            <div class="form-row">
+                <label>Ticker or ISIN:
+                    <input type="text" id="input-instrument" placeholder="e.g. AAPL, IE00B4L5Y983">
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Name (optional, for non-marketable):
+                    <input type="text" id="input-name" placeholder="e.g. Savings Account">
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Shares / Units:
+                    <input type="number" id="input-shares" step="0.01" placeholder="100">
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Cost per Share:
+                    <input type="number" id="input-cost" step="0.01" placeholder="150.00">
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Currency:
+                    <select id="input-currency">
+                        <option value="EUR">EUR</option>
+                        <option value="USD">USD</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Asset Class:
+                    <select id="input-asset-class">
+                        <option value="equity">Equity</option>
+                        <option value="etf">ETF</option>
+                        <option value="fixed_income">Fixed Income</option>
+                        <option value="cash_equivalent">Cash Equivalent</option>
+                        <option value="real_estate">Real Estate</option>
+                    </select>
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Account Label:
+                    <input type="text" id="input-account" placeholder="default" value="default">
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Date Acquired:
+                    <input type="date" id="input-date-acquired">
+                </label>
+            </div>
+            <div class="form-row">
+                <label>Notes:
+                    <input type="text" id="input-notes" placeholder="Optional notes">
+                </label>
+            </div>
+            <button id="btn-add-holding" class="btn btn-primary">Add Holding</button>
+            <div id="add-holding-status" style="margin-top:12px"></div>
+        </div>
+    </div>
+</div>
