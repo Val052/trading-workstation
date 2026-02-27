@@ -1,16 +1,14 @@
-# Trading Workstation
+# Trading Terminal
 
-A modular, local-first trading research system combining automated strategy scanning with AI-powered deep analysis. Built for a swing trader transitioning from study to execution, with a poker player's emphasis on EV, position sizing, and process over outcome.
+A modular, local-first trading terminal combining automated scanning, portfolio intelligence, and AI-powered research. Built as a platform with independent functional modules sharing a common data layer, instrument universe, and UI shell.
 
 ## Architecture
 
-Two parallel systems sharing data:
-
-**Web App** (FastAPI/SQLite on `http://127.0.0.1:8000`)
-- Automated strategy scanners: EMA Pullback RS, AVWAP Bounce, Sector Rotation
-- Broad universe scanning (S&P 500), risk calculator, watchlist, candidate tracking
-- Code lives in `app/` — models, routers, services, strategies
-- Database: `data/workstation.db` (SQLite)
+**Platform + Modules** (FastAPI/SQLite on `http://127.0.0.1:8000`)
+- Platform layer (`core/`): database, shared services (market data, instrument registry, event log, cache), UI shell
+- Module system (`modules/`): each module registers routes, models, and UI panels
+- Current modules: Scanner, Portfolio
+- Database: `data/terminal.db` (SQLite, gitignored)
 - Run: `make run` or `python3 run.py`
 
 **Skills Layer** (Claude Code terminal)
@@ -19,7 +17,37 @@ Two parallel systems sharing data:
 - Memory system for persistent context across sessions
 - Skills live in `.claude/skills/` — plain markdown, no code files
 
-**Scanner surfaces candidates → Skills investigate them → Memory connects everything over time.**
+**Scanner surfaces candidates → Skills investigate them → Portfolio tracks holdings → Event log connects everything.**
+
+## File Structure
+
+```
+core/                          # Platform layer
+  app.py                       # FastAPI app factory, module discovery
+  database.py                  # SQLite engine, SessionLocal, get_db
+  models/                      # Platform models (Base, Instrument, Event, PriceCache)
+  services/                    # Shared services (market_data, universe, instrument_registry, event_log, cache)
+  ui/
+    shell.html                 # Main layout: sidebar + content area
+    static/                    # shell.js, shell.css
+    module_panels/             # Per-module HTML/JS panels
+
+modules/                       # Functional modules
+  base.py                      # BaseModule ABC
+  scanner/                     # Scanner module
+    models.py                  # Strategy, ScanResult, Candidate, Outcome, AccountConfig
+    routers/                   # API routes under /api/scanner/
+    services/                  # scanner.py, risk_calculator.py
+    strategies/                # Pluggable strategy modules (auto-discovered)
+  portfolio/                   # Portfolio module
+    models.py                  # PortfolioHolding, PortfolioSnapshot
+    routers/                   # API routes under /api/portfolio/
+    services/                  # enrichment.py
+
+config/settings.yaml           # Platform + module config
+memory/                        # Skills layer persistent memory
+.claude/skills/                # Skill definitions
+```
 
 ## Slash Commands
 
@@ -36,7 +64,7 @@ Two parallel systems sharing data:
 These are non-negotiable. Every analysis and recommendation must respect them:
 
 1. **Never fabricate data.** If a data point is unavailable from any source, mark it `[DATA UNAVAILABLE]`. Never interpolate or estimate missing financial data.
-2. **Maximum 2% portfolio risk per trade.** Position size = (account_size × 0.02) / risk_per_share.
+2. **Maximum 2% portfolio risk per trade.** Position size = (account_size x 0.02) / risk_per_share.
 3. **Maximum 10% portfolio allocation to a single position.**
 4. **Always define stop-loss levels.** No recommendation without a concrete stop.
 5. **Always show data sources and timestamps.** Every data point should be traceable.
@@ -74,27 +102,15 @@ The `/analyze` command uses a weighted composite system (documented in `.claude/
 | Sentiment | 15% | 0-5 | News, analysts, catalysts |
 | Risk | 15% | 0-5 | Volatility, sizing, concentration |
 
-Composite → Recommendation: Strong Buy (8.5+), Buy (7.0-8.4), Hold (5.0-6.9), Sell (3.0-4.9), Strong Sell (<3.0)
+Composite -> Recommendation: Strong Buy (8.5+), Buy (7.0-8.4), Hold (5.0-6.9), Sell (3.0-4.9), Strong Sell (<3.0)
 
-## Codebase Reference
+## Integration Queries
 
-Key files in the existing web app (do not modify unless explicitly needed for integration):
-
-- `app/models.py` — SQLAlchemy models: strategies, scan_results, candidates, outcomes, account_config, price_cache
-- `app/services/market_data.py` — yfinance wrapper with daily SQLite caching
-- `app/services/scanner.py` — strategy discovery and scan execution
-- `app/services/risk_calculator.py` — position sizing, R-multiples
-- `app/services/universe.py` — S&P 500 ticker list, sector ETFs
-- `app/strategies/` — pluggable strategy modules (base.py, ema_pullback_rs.py, avwap_bounce.py, sector_rotation.py)
-- `config/settings.yaml` — account config, universe selection, active strategies
-- `data/workstation.db` — SQLite database (gitignored)
-
-**Integration queries** (for Skills to read scanner data):
 ```python
 # Check if ticker appeared in recent scans
 python3 -c "
-from app.database import SessionLocal
-from app.models import ScanResult
+from core.database import SessionLocal
+from modules.scanner.models import ScanResult
 db = SessionLocal()
 rows = db.query(ScanResult).filter(ScanResult.ticker=='AAPL').order_by(ScanResult.created_at.desc()).limit(5).all()
 for r in rows:
@@ -104,12 +120,31 @@ db.close()
 
 # Read account config
 python3 -c "
-from app.database import SessionLocal
-from app.models import AccountConfig
+from core.database import SessionLocal
+from modules.scanner.models import AccountConfig
 db = SessionLocal()
 a = db.query(AccountConfig).order_by(AccountConfig.id.desc()).first()
 if a: print(f'Size: {a.account_size}, Risk: {a.risk_per_trade}, Max Pos: {a.max_positions}')
 else: print('No account config — using defaults: 10000, 0.005, 5')
 db.close()
 "
+
+# Query event log
+python3 -c "
+from core.database import SessionLocal
+from core.models.events import Event
+db = SessionLocal()
+events = db.query(Event).order_by(Event.timestamp.desc()).limit(10).all()
+for e in events:
+    print(f'{e.timestamp} {e.module}/{e.event_type} instrument={e.instrument_id}')
+db.close()
+"
 ```
+
+## Technical Notes
+
+- Python 3.9 on macOS — use `Optional[X]` not `X | None` in Pydantic models and FastAPI params
+- `from __future__ import annotations` is safe in non-Pydantic files
+- yfinance single-ticker downloads return MultiIndex — flatten with `.get_level_values(0)`
+- Platform uses `core/` (not `platform/`) to avoid shadowing Python's stdlib `platform` module
+- Old `app/` directory kept for reference — will be removed once migration is fully verified

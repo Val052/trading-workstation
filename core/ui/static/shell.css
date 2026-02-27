@@ -1,0 +1,370 @@
+/* Trading Terminal — Platform Shell Styles (dark theme) */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+    --bg: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #1c2333;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #d29922;
+    --border: #30363d;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* ── Shell Layout ── */
+.shell-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.shell-sidebar {
+    width: 200px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+}
+
+.shell-sidebar ul { list-style: none; padding: 8px 0; }
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.15s;
+    font-size: 14px;
+}
+
+.nav-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+.nav-link.active {
+    color: var(--text);
+    background: var(--bg-card);
+    border-left: 3px solid var(--accent);
+    padding-left: 17px;
+}
+
+.module-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* ── Content Area ── */
+.shell-content {
+    flex: 1;
+    padding: 24px;
+    overflow-x: auto;
+    min-width: 0;
+}
+
+.welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    color: var(--text-muted);
+}
+
+.welcome-screen h1 { font-size: 28px; margin-bottom: 8px; color: var(--text); }
+
+/* ── Shared Component Styles ── */
+
+/* Headings */
+h1 { font-size: 22px; font-weight: 600; }
+h2 { font-size: 18px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--accent); }
+
+/* Buttons */
+.btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+}
+
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 600;
+}
+
+.btn-primary:hover { opacity: 0.85; color: var(--bg); }
+.btn-small { padding: 4px 10px; font-size: 12px; }
+
+/* Status bar */
+.status-bar {
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    min-height: 20px;
+}
+
+.status-bar.loading { background: rgba(88,166,255,0.1); color: var(--accent); }
+.status-bar.success { background: rgba(63,185,80,0.1); color: var(--green); }
+.status-bar.error { background: rgba(248,81,73,0.1); color: var(--red); }
+
+/* Data tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.data-table th {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.data-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table tbody tr {
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.data-table tbody tr:hover { background: var(--bg-card); }
+.data-table tbody tr.selected { background: var(--bg-card); border-left: 3px solid var(--accent); }
+
+/* Filter bar */
+.filter-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.filter-bar label { font-size: 13px; color: var(--text-muted); }
+
+.filter-bar select,
+.filter-bar input[type="date"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+}
+
+/* Detail panel */
+.detail-panel {
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.detail-panel.hidden { display: none; }
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-header h2 { flex: 1; }
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+.detail-section {
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+}
+
+.detail-section table { width: 100%; font-size: 13px; }
+.detail-section table td { padding: 3px 0; border: none; }
+.detail-section table td:first-child { color: var(--text-muted); width: 50%; }
+
+/* Forms */
+.form-row { margin-bottom: 12px; }
+
+.form-row label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+input, select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-active { background: rgba(63,185,80,0.15); color: var(--green); }
+.badge-inactive { background: rgba(248,81,73,0.15); color: var(--red); }
+
+/* Strategy cards */
+.strategy-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.strategy-card h3 { margin-bottom: 4px; }
+.strategy-card .meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.strategy-card .params { font-size: 12px; font-family: monospace; color: var(--text-muted); }
+
+/* Near misses */
+.near-misses-section {
+    margin-top: 24px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+}
+
+.near-misses-section.hidden { display: none; }
+
+.collapsible {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    user-select: none;
+}
+
+.collapsible .toggle-arrow { font-size: 10px; transition: transform 0.2s; }
+.collapsible.collapsed .toggle-arrow { transform: rotate(-90deg); }
+
+.near-miss-table { opacity: 0.7; }
+.near-miss-table tbody tr { border-left: 2px solid var(--border); }
+
+.failed-filter {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    background: rgba(210,153,34,0.15);
+    color: var(--orange);
+}
+
+/* Colors */
+.positive { color: var(--green); }
+.negative { color: var(--red); }
+
+/* Page header */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* Settings form */
+.settings-form {
+    max-width: 400px;
+    background: var(--bg-card);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.settings-form input { width: 200px; }
+
+/* Module sub-nav (tabs within a module) */
+.module-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.module-tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    font-size: 14px;
+    transition: all 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+.module-tab:hover { color: var(--text); }
+
+.module-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .detail-grid { grid-template-columns: 1fr; }
+    .shell-sidebar { width: 160px; }
+}
