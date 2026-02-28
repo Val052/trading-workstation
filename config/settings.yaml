@@ -13,3 +13,32 @@ strategies:
     - ema_pullback_rs
     - avwap_bounce
     - sector_rotation
+    - trend_following
+  weekly_enrichment:
+    enabled: true
+    sort_by_alignment: true
+
+market_pulse:
+  cache_hours: 4
+  risk_on_threshold: 0.30
+  risk_off_threshold: -0.30
+  weights:
+    intermarket: 0.45
+    breadth: 0.30
+    volatility: 0.25
+  ratios:
+    stocks_vs_bonds: ["SPY", "TLT"]
+    credit_stress: ["HYG", "IEF"]
+    growth_vs_value: ["IWF", "IWD"]
+    copper_vs_gold: ["CPER", "GLD"]
+    intl_vs_us: ["EFA", "SPY"]
+    consumer_risk: ["XLY", "XLP"]
+    inflation_expectations: ["TIP", "IEF"]
+    speculative_vs_defensive: ["BTC-USD", "GLD"]
+  tracked_assets:
+    equity: ["QQQ", "IWM", "EEM", "FXI"]
+    bond: ["SHY", "LQD"]
+    commodity: ["SLV", "USO", "DBC"]
+    currency: ["UUP", "FXE", "FXY"]
+    crypto: ["ETH-USD"]
+    volatility: ["^VIX", "^VIX3M"]

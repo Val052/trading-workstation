@@ -71,14 +71,43 @@ class Outcome(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     scan_result_id: Mapped[int] = mapped_column(Integer, ForeignKey("scan_results.id"))
     ticker: Mapped[str] = mapped_column(String, nullable=False)
+
+    # Entry reference (from scan)
+    entry_price: Mapped[float] = mapped_column(Float, nullable=False)
+    entry_date: Mapped[date] = mapped_column(Date, nullable=False)
+    strategy_id: Mapped[str] = mapped_column(String, nullable=False)
+
+    # Forward prices (close on trading day N after scan)
     price_day_1: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    price_day_2: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     price_day_3: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     price_day_5: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     price_day_10: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    price_day_20: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Excursion analysis (within first 10 trading days)
     max_favorable: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     max_adverse: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    max_favorable_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    max_adverse_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    max_favorable_day: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    max_adverse_day: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    # Theoretical trade outcome
     would_have_hit_target: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
     would_have_hit_stop: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    target_hit_day: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    stop_hit_day: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    theoretical_r_multiple: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Regime context at time of scan
+    regime_at_scan: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    regime_score_at_scan: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # Tracking state
+    status: Mapped[str] = mapped_column(String, default="pending")
+    days_tracked: Mapped[int] = mapped_column(Integer, default=0)
+
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     scan_result: Mapped["ScanResult"] = relationship(back_populates="outcomes")

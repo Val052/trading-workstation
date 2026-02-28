@@ -21,6 +21,7 @@
 
             if (tab.dataset.tab === 'strategies') loadStrategies();
             if (tab.dataset.tab === 'watchlist') loadWatchlist();
+            if (tab.dataset.tab === 'outcomes') loadOutcomes();
             if (tab.dataset.tab === 'settings') loadSettings();
         });
     });
@@ -90,7 +91,7 @@
         tbody.innerHTML = '';
 
         if (!results.length) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted)">No results. Click "Run Scan" to scan the universe.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted)">No results. Click "Run Scan" to scan the universe.</td></tr>';
             return;
         }
 
@@ -102,14 +103,19 @@
             const sig = r.signal_data || {};
             const isConvergent = tickerCounts[r.ticker] > 1;
 
+            const wc = sig.weekly_context || {};
+            const alignLabel = wc.alignment_label || '-';
+            const alignClass = alignLabel === 'STRONG' ? 'positive' : alignLabel === 'CONFLICTING' ? 'negative' : alignLabel === 'WEAK' ? 'align-weak' : '';
+
             tr.innerHTML = `
                 <td>${r.ticker}${isConvergent ? ' <span style="color:var(--accent)" title="Multiple strategies">&#9733;</span>' : ''}</td>
                 <td>${r.strategy_name || r.strategy_id}</td>
                 <td>$${(r.price || r.price_at_scan || 0).toFixed(2)}</td>
-                <td>${sig.rs_ratio != null ? sig.rs_ratio : (sig.sector_rs != null ? sig.sector_rs : '-')}</td>
+                <td>${sig.rs_ratio != null ? sig.rs_ratio : (sig.rs_vs_spy_20d != null ? sig.rs_vs_spy_20d : (sig.sector_rs != null ? sig.sector_rs : '-'))}</td>
                 <td>${formatKeyMetric(sig)}</td>
                 <td>${sig.volume_ratio || (sig.sector ? sig.sector : '-')}</td>
-                <td>${sig.atr_14 ? '$' + sig.atr_14 : '-'}</td>
+                <td>${sig.atr_14 ? '$' + sig.atr_14 : (sig.atr ? '$' + sig.atr : '-')}</td>
+                <td class="${alignClass}">${alignLabel}</td>
                 <td>${r.scan_date || '-'}</td>
             `;
 
@@ -121,6 +127,7 @@
     function formatKeyMetric(sig) {
         if (sig.dist_to_ema8_pct != null) return sig.dist_to_ema8_pct + '% EMA8';
         if (sig.dist_to_avwap_pct != null) return sig.dist_to_avwap_pct + '% AVWAP';
+        if (sig.breakout_type != null) return sig.breakout_type.replace(/_/g, ' ');
         if (sig.sector_rank != null) return '#' + sig.sector_rank + ' sector';
         return '-';
     }
@@ -402,6 +409,190 @@
                 `<span class="negative">Save failed: ${err.message}</span>`;
         }
     });
+
+    // ── Outcomes tab ──
+    document.getElementById('btn-update-outcomes').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-update-outcomes');
+        const status = document.getElementById('outcomes-status');
+
+        btn.disabled = true;
+        btn.textContent = 'Updating...';
+        status.className = 'status-bar loading';
+        status.textContent = 'Fetching forward prices for tracked outcomes...';
+
+        try {
+            const resp = await fetch(`${SAPI}/outcomes/update`, { method: 'POST' });
+            const data = await resp.json();
+            status.className = 'status-bar success';
+            status.textContent = `Updated: ${data.updated}, Completed: ${data.completed}, Errors: ${data.errors}, Skipped: ${data.skipped}`;
+            loadOutcomes();
+        } catch (err) {
+            status.className = 'status-bar error';
+            status.textContent = `Update failed: ${err.message}`;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Update Outcomes';
+        }
+    });
+
+    document.getElementById('btn-filter-outcomes').addEventListener('click', () => loadOutcomeTable());
+
+    async function loadOutcomes() {
+        await Promise.all([loadEdgeSummary(), loadStrategyCards(), loadOutcomeTable()]);
+    }
+
+    async function loadEdgeSummary() {
+        try {
+            const resp = await fetch(`${SAPI}/analytics/edge`);
+            const data = await resp.json();
+
+            const badge = document.getElementById('edge-verdict-badge');
+            badge.textContent = data.verdict.replace(/_/g, ' ');
+            badge.className = 'badge ' + (data.verdict === 'POSITIVE_EDGE' ? 'badge-active' :
+                data.verdict === 'NO_EDGE' ? 'badge-danger' : 'badge-inactive');
+
+            const exp = document.getElementById('edge-expectancy');
+            if (data.system_expectancy != null) {
+                exp.textContent = (data.system_expectancy >= 0 ? '+' : '') + data.system_expectancy + 'R';
+                exp.className = 'edge-big-number ' + (data.system_expectancy >= 0 ? 'positive' : 'negative');
+            } else {
+                exp.textContent = '—';
+                exp.className = 'edge-big-number';
+            }
+
+            let detailsHtml = '';
+            if (data.total_trades != null) {
+                detailsHtml += `<span>Trades: ${data.total_trades}</span>`;
+            }
+            if (data.system_win_rate != null) {
+                detailsHtml += `<span>Win Rate: ${(data.system_win_rate * 100).toFixed(1)}%</span>`;
+            }
+            if (data.best_strategy) {
+                detailsHtml += `<span class="positive">Best: ${data.best_strategy.id} (${data.best_strategy.expectancy}R)</span>`;
+            }
+            if (data.worst_strategy) {
+                detailsHtml += `<span class="negative">Worst: ${data.worst_strategy.id} (${data.worst_strategy.expectancy}R)</span>`;
+            }
+            if (data.regime_impact && data.regime_impact.recommendation) {
+                detailsHtml += `<span>${data.regime_impact.recommendation}</span>`;
+            }
+            document.getElementById('edge-details').innerHTML = detailsHtml;
+        } catch (err) {
+            console.error('Failed to load edge summary:', err);
+        }
+    }
+
+    async function loadStrategyCards() {
+        try {
+            const resp = await fetch(`${SAPI}/analytics`);
+            const data = await resp.json();
+            const container = document.getElementById('strategy-report-cards');
+            container.innerHTML = '';
+
+            if (!data.strategies || !data.strategies.length) {
+                container.innerHTML = '<p style="color:var(--text-muted)">No strategy data yet. Run a scan and update outcomes to see analytics.</p>';
+                return;
+            }
+
+            // Populate strategy filter
+            const sel = document.getElementById('outcome-filter-strategy');
+            sel.innerHTML = '<option value="">All</option>';
+            data.strategies.forEach(s => {
+                sel.innerHTML += `<option value="${s.strategy_id}">${s.strategy_id}</option>`;
+            });
+
+            data.strategies.forEach(s => {
+                const card = document.createElement('div');
+                const expClass = s.expectancy == null ? '' : s.expectancy > 0 ? 'card-positive' : 'card-negative';
+                const confClass = s.confidence === 'HIGH' ? 'badge-active' :
+                    s.confidence === 'MODERATE' ? 'badge-warning' :
+                    s.confidence === 'LOW' ? 'badge-inactive' : 'badge-danger';
+
+                card.className = `strategy-report-card ${expClass}`;
+                card.innerHTML = `
+                    <div class="card-header">
+                        <h3>${s.strategy_id}</h3>
+                        <span class="badge ${confClass}">${s.confidence}</span>
+                    </div>
+                    <div class="card-stats">
+                        <div class="stat">
+                            <span class="stat-value ${s.expectancy != null && s.expectancy >= 0 ? 'positive' : 'negative'}">${s.expectancy != null ? s.expectancy + 'R' : '—'}</span>
+                            <span class="stat-label">Expectancy</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">${s.win_rate != null ? (s.win_rate * 100).toFixed(0) + '%' : '—'}</span>
+                            <span class="stat-label">Win Rate</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">${s.avg_r_multiple != null ? s.avg_r_multiple + 'R' : '—'}</span>
+                            <span class="stat-label">Avg R</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">${s.mfe_mae_ratio != null ? s.mfe_mae_ratio : '—'}</span>
+                            <span class="stat-label">MFE/MAE</span>
+                        </div>
+                    </div>
+                    <div class="card-meta">
+                        <span>${s.tracked_outcomes} tracked / ${s.total_scans} total</span>
+                        ${s.avg_return_day_5 != null ? '<span>Day 5: ' + (s.avg_return_day_5 >= 0 ? '+' : '') + s.avg_return_day_5 + '%</span>' : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        } catch (err) {
+            console.error('Failed to load strategy cards:', err);
+        }
+    }
+
+    async function loadOutcomeTable() {
+        const strategyId = document.getElementById('outcome-filter-strategy').value;
+        const status = document.getElementById('outcome-filter-status').value;
+
+        let url = `${SAPI}/outcomes?days_back=90`;
+        if (strategyId) url += `&strategy_id=${strategyId}`;
+        if (status) url += `&status=${status}`;
+
+        try {
+            const resp = await fetch(url);
+            const data = await resp.json();
+            const tbody = document.querySelector('#outcomes-table tbody');
+            tbody.innerHTML = '';
+
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted)">No outcomes yet. Run a scan to create tracking records.</td></tr>';
+                return;
+            }
+
+            data.forEach(o => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${o.entry_date || '—'}</td>
+                    <td>${o.ticker}</td>
+                    <td>${o.strategy_id}</td>
+                    <td>$${o.entry_price ? o.entry_price.toFixed(2) : '—'}</td>
+                    <td class="${returnClass(o.day5_return_pct)}">${fmtReturn(o.day5_return_pct)}</td>
+                    <td class="${returnClass(o.day10_return_pct)}">${fmtReturn(o.day10_return_pct)}</td>
+                    <td class="positive">${o.max_favorable_pct != null ? '+' + o.max_favorable_pct + '%' : '—'}</td>
+                    <td class="negative">${o.max_adverse_pct != null ? '-' + o.max_adverse_pct + '%' : '—'}</td>
+                    <td class="${returnClass(o.theoretical_r_multiple)}">${o.theoretical_r_multiple != null ? o.theoretical_r_multiple + 'R' : '—'}</td>
+                    <td><span class="badge ${o.status === 'complete' ? 'badge-active' : o.status === 'partial' ? 'badge-warning' : o.status === 'error' ? 'badge-danger' : 'badge-inactive'}">${o.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            console.error('Failed to load outcomes:', err);
+        }
+    }
+
+    function fmtReturn(val) {
+        if (val == null) return '—';
+        return (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+    }
+
+    function returnClass(val) {
+        if (val == null) return '';
+        return val > 0 ? 'positive' : val < 0 ? 'negative' : '';
+    }
 
     // ── Load last results on panel load ──
     loadFilteredResults();

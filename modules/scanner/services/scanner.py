@@ -163,6 +163,28 @@ def run_scan(
 
     db.commit()
 
+    # Weekly timeframe enrichment (adds alignment context to all results)
+    try:
+        from modules.scanner.services.weekly_enrichment import enrich_with_weekly
+        all_results = results + near_misses
+        enrich_with_weekly(all_results, data)
+        # Sort full hits by weekly alignment (strongest first)
+        results.sort(
+            key=lambda r: r.get("signal_data", {}).get("weekly_context", {}).get("alignment_score", 0),
+            reverse=True,
+        )
+        logger.info(f"Weekly enrichment applied to {len(all_results)} results")
+    except Exception as e:
+        logger.error(f"Weekly enrichment failed: {e}")
+
+    # Create outcome tracking records for full hits
+    try:
+        from modules.scanner.services.outcome_tracker import create_outcomes_for_scan
+        outcomes_created = create_outcomes_for_scan(db, results)
+        logger.info(f"Created {outcomes_created} outcome tracking records")
+    except Exception as e:
+        logger.error(f"Outcome creation failed: {e}")
+
     # Log scan event
     log_event(
         module="scanner",

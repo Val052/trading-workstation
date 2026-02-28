@@ -5,6 +5,7 @@
         <button class="module-tab active" data-tab="dashboard">Dashboard</button>
         <button class="module-tab" data-tab="strategies">Strategies</button>
         <button class="module-tab" data-tab="watchlist">Watchlist</button>
+        <button class="module-tab" data-tab="outcomes">Outcomes</button>
         <button class="module-tab" data-tab="settings">Settings</button>
     </div>
 
@@ -38,6 +39,7 @@
                     <th>Key Metric</th>
                     <th>Vol / Sector</th>
                     <th>ATR(14)</th>
+                    <th>Alignment</th>
                     <th>Date</th>
                 </tr>
             </thead>
@@ -116,6 +118,64 @@
                     <th>R-Multiple</th>
                     <th>Shares</th>
                     <th>$ Risk</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- Outcomes tab -->
+    <div id="tab-outcomes" class="tab-content">
+        <div class="page-header">
+            <h1>Outcome Tracker</h1>
+            <button id="btn-update-outcomes" class="btn btn-primary">Update Outcomes</button>
+        </div>
+        <div id="outcomes-status" class="status-bar"></div>
+
+        <!-- Edge Summary -->
+        <div id="edge-summary" class="edge-summary-panel">
+            <div class="edge-verdict-row">
+                <span id="edge-verdict-badge" class="badge">—</span>
+                <span id="edge-expectancy" class="edge-big-number">—</span>
+                <span class="edge-label">System Expectancy (R)</span>
+            </div>
+            <div id="edge-details" class="edge-details"></div>
+        </div>
+
+        <!-- Strategy Report Cards -->
+        <div id="strategy-report-cards" class="strategy-cards-grid"></div>
+
+        <!-- Outcome Table -->
+        <div class="outcome-filters">
+            <label>Strategy:
+                <select id="outcome-filter-strategy">
+                    <option value="">All</option>
+                </select>
+            </label>
+            <label>Status:
+                <select id="outcome-filter-status">
+                    <option value="">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="partial">Partial</option>
+                    <option value="complete">Complete</option>
+                </select>
+            </label>
+            <button id="btn-filter-outcomes" class="btn btn-small">Filter</button>
+        </div>
+
+        <table id="outcomes-table" class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Ticker</th>
+                    <th>Strategy</th>
+                    <th>Entry</th>
+                    <th>Day 5 %</th>
+                    <th>Day 10 %</th>
+                    <th>MFE%</th>
+                    <th>MAE%</th>
+                    <th>R-Multiple</th>
                     <th>Status</th>
                 </tr>
             </thead>

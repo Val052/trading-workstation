@@ -43,6 +43,7 @@ function renderSidebar(modules) {
 
 function getIcon(iconName) {
     const icons = {
+        'pulse': '\u2665',       // Market Pulse (heart/pulse)
         'radar': '\u25CE',       // Scanner
         'briefcase': '\u25A0',   // Portfolio
         'chart': '\u25B2',       // Charts

@@ -1,0 +1,131 @@
+<!-- Market Pulse Module Panel -->
+<div id="market-pulse-panel">
+    <div class="page-header">
+        <h1>Market Pulse</h1>
+        <button id="btn-refresh-pulse" class="btn btn-primary">Refresh</button>
+    </div>
+    <div id="pulse-status" class="status-bar"></div>
+
+    <!-- Regime Header -->
+    <div id="regime-header" class="regime-header-card">
+        <div class="regime-badge-area">
+            <span id="regime-badge" class="regime-badge">--</span>
+            <span id="regime-score" class="regime-score-value">0.00</span>
+        </div>
+        <p id="regime-description" class="regime-desc">No data yet. Hit refresh to run analysis.</p>
+        <div id="regime-meta" class="regime-meta"></div>
+    </div>
+
+    <!-- Two-column grid: Intermarket + Volatility -->
+    <div class="pulse-grid-2col">
+        <!-- Intermarket Ratios -->
+        <div class="pulse-card">
+            <h3>Intermarket Ratios</h3>
+            <table id="ratios-table" class="data-table pulse-table">
+                <thead>
+                    <tr>
+                        <th>Ratio</th>
+                        <th>Pair</th>
+                        <th>Trend</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- Volatility -->
+        <div class="pulse-card">
+            <h3>Volatility Regime</h3>
+            <div id="vol-dashboard">
+                <div class="vol-metrics">
+                    <div class="vol-metric">
+                        <span class="metric-label">VIX</span>
+                        <span id="vix-level" class="metric-value">--</span>
+                        <span id="vix-zone" class="badge">--</span>
+                    </div>
+                    <div class="vol-metric">
+                        <span class="metric-label">VIX3M</span>
+                        <span id="vix3m-level" class="metric-value">--</span>
+                    </div>
+                    <div class="vol-metric">
+                        <span class="metric-label">Term Structure</span>
+                        <span id="term-structure" class="metric-value">--</span>
+                    </div>
+                    <div class="vol-metric">
+                        <span class="metric-label">VIX 50 DMA</span>
+                        <span id="vix-ma50" class="metric-value">--</span>
+                    </div>
+                    <div class="vol-metric">
+                        <span class="metric-label">VIX Trend</span>
+                        <span id="vix-trend" class="metric-value">--</span>
+                    </div>
+                    <div class="vol-metric">
+                        <span class="metric-label">Percentile</span>
+                        <span id="vix-pct" class="metric-value">--</span>
+                    </div>
+                </div>
+                <div id="vol-contrarian" class="contrarian-alert hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two-column grid: Breadth + Sectors -->
+    <div class="pulse-grid-2col">
+        <!-- Breadth -->
+        <div class="pulse-card">
+            <h3>Market Breadth</h3>
+            <div id="breadth-dashboard">
+                <div class="breadth-gauges">
+                    <div class="gauge-row">
+                        <span class="gauge-label">Above 50 DMA</span>
+                        <div class="gauge-bar-bg"><div id="gauge-50dma" class="gauge-bar"></div></div>
+                        <span id="gauge-50dma-val" class="gauge-val">--</span>
+                    </div>
+                    <div class="gauge-row">
+                        <span class="gauge-label">Above 200 DMA</span>
+                        <div class="gauge-bar-bg"><div id="gauge-200dma" class="gauge-bar"></div></div>
+                        <span id="gauge-200dma-val" class="gauge-val">--</span>
+                    </div>
+                </div>
+                <div class="breadth-stats">
+                    <table class="pulse-mini-table">
+                        <tr><td>Momentum</td><td id="breadth-momentum">--</td></tr>
+                        <tr><td>New Highs (50d)</td><td id="new-highs">--</td></tr>
+                        <tr><td>New Lows (50d)</td><td id="new-lows">--</td></tr>
+                        <tr><td>Hi/Lo Ratio</td><td id="hi-lo-ratio">--</td></tr>
+                        <tr><td>Breadth Score</td><td id="breadth-score">--</td></tr>
+                        <tr><td>Stocks Analyzed</td><td id="total-stocks">--</td></tr>
+                    </table>
+                </div>
+                <div id="thrust-alert" class="thrust-alert hidden">BREADTH THRUST DETECTED</div>
+            </div>
+        </div>
+
+        <!-- Sector Heatmap -->
+        <div class="pulse-card">
+            <h3>Sector Rankings</h3>
+            <div id="rotation-pattern" class="rotation-badge">--</div>
+            <table id="sectors-table" class="data-table pulse-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Sector</th>
+                        <th>1W</th>
+                        <th>1M</th>
+                        <th>3M</th>
+                        <th>RS</th>
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Signals -->
+    <div id="signals-section" class="pulse-card signals-card hidden">
+        <h3>Notable Signals</h3>
+        <ul id="signals-list"></ul>
+    </div>
+</div>
