@@ -1,7 +1,10 @@
 """Candidate (watchlist/bookmark) endpoints."""
 
+import logging
 from datetime import datetime
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -20,6 +23,7 @@ class BookmarkRequest(BaseModel):
     stop_loss: float
     target_1: float
     target_2: Optional[float] = None
+    trade_structure: str = "stock"
 
 
 class RiskCalcRequest(BaseModel):
@@ -87,6 +91,29 @@ def bookmark_candidate(req: BookmarkRequest, db: Session = Depends(get_db)):
         target_2=req.target_2,
     )
 
+    # Options analysis if non-stock structure requested
+    options_analysis = None
+    if req.trade_structure != "stock":
+        try:
+            from modules.scanner.services.options_chain import fetch_chain
+            from modules.scanner.services.options_structures import compare_structures, calculate_options_risk
+            chains = fetch_chain(scan_result.ticker)
+            comparison = compare_structures(
+                ticker=scan_result.ticker,
+                entry=scan_result.price_at_scan,
+                stop=req.stop_loss,
+                target=req.target_1,
+                account_size=account_size,
+                risk_per_trade=risk_pct,
+                chains_data=chains,
+            )
+            for s in comparison["structures"]:
+                if s["structure_type"] == req.trade_structure:
+                    options_analysis = calculate_options_risk(s, account_size)
+                    break
+        except Exception as e:
+            logger.warning(f"Options analysis failed for bookmark: {e}")
+
     candidate = Candidate(
         scan_result_id=scan_result.id,
         ticker=scan_result.ticker,
@@ -98,6 +125,8 @@ def bookmark_candidate(req: BookmarkRequest, db: Session = Depends(get_db)):
         reward_per_share=calc.reward_per_share,
         r_multiple=calc.r_multiple,
         position_size=calc.position_size,
+        trade_structure=req.trade_structure,
+        options_analysis=options_analysis,
     )
     db.add(candidate)
     db.commit()

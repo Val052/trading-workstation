@@ -92,9 +92,26 @@
                         <label>Target: <input type="number" id="rc-target" step="0.01"></label>
                     </div>
                     <button id="btn-calc-risk" class="btn btn-small">Calculate</button>
-                    <button id="btn-bookmark" class="btn btn-small">Bookmark</button>
+                    <button id="btn-compare-structures" class="btn btn-small">Compare Structures</button>
+                    <div class="bookmark-group">
+                        <button id="btn-bookmark" class="btn btn-small">Bookmark</button>
+                        <select id="bookmark-structure" class="bookmark-structure-select">
+                            <option value="stock">as Stock</option>
+                            <option value="long_call">as Long Call</option>
+                            <option value="bull_call_spread">as Bull Call Spread</option>
+                            <option value="bull_put_spread">as Bull Put Spread</option>
+                        </select>
+                    </div>
                     <div id="risk-result"></div>
                 </div>
+            </div>
+
+            <!-- Options Structure Comparison -->
+            <div id="options-comparison" class="options-comparison hidden">
+                <h3>Trade Structure Comparison</h3>
+                <div id="options-loading" class="status-bar loading hidden">Fetching options data...</div>
+                <div id="structure-cards" class="structure-cards-grid"></div>
+                <div id="options-warnings" class="options-warnings"></div>
             </div>
         </div>
     </div>

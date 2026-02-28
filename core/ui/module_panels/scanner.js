@@ -288,6 +288,7 @@
         const stop = parseFloat(document.getElementById('rc-stop').value);
         const target = parseFloat(document.getElementById('rc-target').value);
         const scanResultId = selectedResult.id;
+        const structure = document.getElementById('bookmark-structure').value;
 
         if (isNaN(stop) || isNaN(target) || !scanResultId) {
             alert('Set stop and target first, then bookmark. (Near misses cannot be bookmarked.)');
@@ -295,17 +296,136 @@
         }
 
         try {
-            const resp = await fetch(`${SAPI}/candidates/bookmark`, {
+            const endpoint = structure === 'stock' ? `${SAPI}/candidates/bookmark` : `${SAPI}/options/bookmark`;
+            const body = structure === 'stock'
+                ? { scan_result_id: scanResultId, stop_loss: stop, target_1: target, trade_structure: 'stock' }
+                : { scan_result_id: scanResultId, stop_loss: stop, target_1: target, structure_type: structure };
+
+            const resp = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ scan_result_id: scanResultId, stop_loss: stop, target_1: target }),
+                body: JSON.stringify(body),
             });
             const data = await resp.json();
-            alert(`Bookmarked! Position: ${data.risk_calc.position_size} shares, R: ${data.risk_calc.r_multiple}`);
+
+            if (structure === 'stock') {
+                alert(`Bookmarked as Stock! Position: ${data.risk_calc.position_size} shares, R: ${data.risk_calc.r_multiple}`);
+            } else {
+                alert(`Bookmarked as ${structure.replace(/_/g, ' ')}! Contracts: ${data.options_analysis?.contracts || '?'}`);
+            }
         } catch (err) {
             alert(`Bookmark failed: ${err.message}`);
         }
     });
+
+    // ── Compare Structures ──
+    document.getElementById('btn-compare-structures').addEventListener('click', async () => {
+        if (!selectedResult) return;
+
+        const entry = parseFloat(document.getElementById('rc-entry').value);
+        const stop = parseFloat(document.getElementById('rc-stop').value);
+        const target = parseFloat(document.getElementById('rc-target').value);
+
+        if (isNaN(entry) || isNaN(stop) || isNaN(target)) {
+            alert('Fill in entry, stop, and target first.');
+            return;
+        }
+
+        const panel = document.getElementById('options-comparison');
+        const loading = document.getElementById('options-loading');
+        const cardsEl = document.getElementById('structure-cards');
+        const warningsEl = document.getElementById('options-warnings');
+
+        panel.classList.remove('hidden');
+        loading.classList.remove('hidden');
+        cardsEl.innerHTML = '';
+        warningsEl.innerHTML = '';
+
+        try {
+            const resp = await fetch(`${SAPI}/options/compare`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ticker: selectedResult.ticker,
+                    entry_price: entry,
+                    stop_loss: stop,
+                    target_1: target,
+                    scan_result_id: selectedResult.id,
+                }),
+            });
+            const data = await resp.json();
+            loading.classList.add('hidden');
+
+            renderStructureCards(data.structures || [], data.recommendation);
+            renderOptionsWarnings(data.warnings || []);
+        } catch (err) {
+            loading.classList.add('hidden');
+            cardsEl.innerHTML = `<p class="negative">Failed to load options data: ${err.message}</p>`;
+        }
+    });
+
+    function renderStructureCards(structures, recommendation) {
+        const container = document.getElementById('structure-cards');
+        container.innerHTML = '';
+
+        if (!structures.length) {
+            container.innerHTML = '<p style="color:var(--text-muted)">No structures available.</p>';
+            return;
+        }
+
+        const bestType = recommendation?.best;
+
+        structures.forEach(s => {
+            const isBest = s.structure_type === bestType;
+            const card = document.createElement('div');
+            const scoreClass = s.score > 65 ? 'score-high' : s.score > 40 ? 'score-mid' : 'score-low';
+
+            card.className = `structure-card ${isBest ? 'structure-best' : ''}`;
+            card.innerHTML = `
+                <div class="structure-header">
+                    <span class="structure-name">${s.display_name}${isBest ? ' ★' : ''}</span>
+                    <span class="structure-score ${scoreClass}">${s.score}</span>
+                </div>
+                <div class="structure-body">
+                    <div class="struct-row"><span>Risk</span><span class="negative">$${fmtNum(s.max_risk)}</span></div>
+                    <div class="struct-row"><span>Reward</span><span class="positive">$${s.max_reward != null ? fmtNum(s.max_reward) : '∞'}</span></div>
+                    <div class="struct-row"><span>R:R</span><span>${s.risk_reward_ratio ? s.risk_reward_ratio.toFixed(1) + ':1' : '—'}</span></div>
+                    <div class="struct-row"><span>Breakeven</span><span>${s.breakeven ? '$' + s.breakeven.toFixed(2) : '—'}</span></div>
+                    <div class="struct-row"><span>Capital</span><span>$${fmtNum(s.capital_required)}</span></div>
+                    ${s.contracts ? `<div class="struct-row"><span>${s.contract_size === 1 ? 'Shares' : 'Contracts'}</span><span>${s.contracts}</span></div>` : ''}
+                    ${s.prob_profit != null ? `<div class="struct-row"><span>PoP</span><span>${(s.prob_profit * 100).toFixed(0)}%</span></div>` : ''}
+                    ${s.prob_target != null ? `<div class="struct-row"><span>P(target)</span><span>${(s.prob_target * 100).toFixed(0)}%</span></div>` : ''}
+                    ${s.position_theta ? `<div class="struct-row"><span>Θ/day</span><span class="${s.position_theta > 0 ? 'positive' : 'negative'}">$${s.position_theta.toFixed(2)}</span></div>` : ''}
+                    ${s.position_delta ? `<div class="struct-row"><span>Δ</span><span>${s.position_delta.toFixed(0)}</span></div>` : ''}
+                    ${s.dte != null ? `<div class="struct-row"><span>DTE</span><span>${s.dte}</span></div>` : ''}
+                </div>
+                ${s.legs && s.legs.length > 0 && s.structure_type !== 'stock' ? `
+                <details class="structure-legs">
+                    <summary>Leg Details</summary>
+                    ${s.legs.map(l => `
+                        <div class="leg-detail">
+                            <span>${l.action.toUpperCase()} ${l.strike ? '$' + l.strike : ''} ${l.type}</span>
+                            <span>@ $${l.price?.toFixed(2) || '?'} ${l.iv ? '(IV: ' + (l.iv * 100).toFixed(0) + '%)' : ''}</span>
+                        </div>
+                    `).join('')}
+                </details>` : ''}
+                ${s.score_rationale ? `<div class="structure-rationale">${s.score_rationale}</div>` : ''}
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function renderOptionsWarnings(warnings) {
+        const el = document.getElementById('options-warnings');
+        if (!warnings.length) { el.innerHTML = ''; return; }
+        el.innerHTML = warnings.map(w => `<div class="options-warning">${w}</div>`).join('');
+    }
+
+    function fmtNum(n) {
+        if (n == null) return '—';
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+        return n.toFixed(0);
+    }
 
     // ── Strategies tab ──
     async function loadStrategies() {

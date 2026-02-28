@@ -11,12 +11,13 @@ class ScannerModule(BaseModule):
     order = 1
 
     def register_routes(self, app):
-        from modules.scanner.routers import scanner, candidates, strategies, settings, outcomes
+        from modules.scanner.routers import scanner, candidates, strategies, settings, outcomes, options
         app.include_router(scanner.router, prefix="/api/scanner", tags=["scanner"])
         app.include_router(candidates.router, prefix="/api/scanner", tags=["scanner"])
         app.include_router(strategies.router, prefix="/api/scanner", tags=["scanner"])
         app.include_router(settings.router, prefix="/api/scanner", tags=["scanner"])
         app.include_router(outcomes.router, prefix="/api/scanner", tags=["scanner"])
+        app.include_router(options.router, prefix="/api/scanner", tags=["scanner"])
 
     def get_models(self):
         from modules.scanner.models import (
