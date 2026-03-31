@@ -82,11 +82,11 @@
 |------|------|--------|--------|-----------|-------------|
 | IE00B4L5Y983 | iShares Core MSCI World | IWDA/SWDA | 87 | ~$8,700 | Cap-weighted world |
 | IE00BSPLC413 | SPDR MSCI USA Small Cap Value Weighted | ZPRV | 210 | ~$13,650 | **US small cap value** — strongest factor premium |
-| IE00BZ56SW52 | iShares MSCI World Value Factor | IWVL | 205 | ~$7,600 | Developed world value factor |
+| IE00BZ56SW52 | WisdomTree Global Quality Dividend Growth | WTEM | 205 | ~$7,600 | Quality + dividend growth factor (NOT value) |
 | IE00B4K48X80 | iShares Core MSCI Europe | IMAE/SMEA | 30 | ~$2,250 | Europe core |
 | IE00BP3QZ825 | iShares MSCI World Momentum Factor | IWMO | 20 | ~$1,800 | Momentum (same ISIN as T212) |
 
-**DEGIRO subtotal: ~$34,000** (factor-heavy: SCV, value, momentum, cap-weighted world, Europe)
+**DEGIRO subtotal: ~$34,000** (SCV, quality/dividend growth, momentum, cap-weighted world, Europe)
 
 ---
 
@@ -95,7 +95,7 @@
 | Category | Est. Value | % of Total |
 |----------|-----------|-----------|
 | Global Equity (cap-weighted) | ~$157,000 | 62% |
-| Factor Tilts (value, SCV, momentum) | ~$36,000 | 14% |
+| Factor Tilts (SCV, quality/div growth, momentum) | ~$36,000 | 14% |
 | Regional/Thematic (China, Europe, EM) | ~$10,000 | 4% |
 | Diversifiers (gold, miners, energy) | ~$2,000 | 1% |
 | Money Market / Cash | ~$55,200 | 22% |
@@ -108,15 +108,18 @@
 - **Genuine diversifiers: ~$2,000 = 1%**
 
 ### Factor Exposure Breakdown
-- **Value:** IWVL DG ($7.6k) + ZPRV DG ($13.7k, US SCV) + 5MVL T212 ($1.6k, EM value) = ~$22.9k
 - **Momentum:** IWMO T212 ($22.7k) + IWMO DG ($1.8k) + IEMO ($2.1k) = ~$26.6k
 - **Small Cap Value:** ZPRV DG ($13.7k) — US only, no global/intl SCV yet
-- **Cap-weighted (redundant in DEGIRO):** IWDA DG ($8.7k) overlaps R4 core
+- **Quality/Dividend Growth:** WTEM DG ($7.6k) — NOT value, screens for ROE + dividend growth
+- **Value (narrow):** 5MVL T212 ($1.6k, EM value only) — **no developed world value at all**
+- **Cap-weighted (redundant):** IWDA DG ($8.7k) + CSPX ($4.6k) + VWCE ($1.1k) + PANX ($0.4k) = ~$14.8k
 
-### Key Factor Observation
-DEGIRO is doing the right thing — ZPRV + IWVL = $21.3k in value/SCV tilts.
-T212 is doing the wrong thing — IWMO ($22.7k) is the dominant factor bet and it's bearish.
-The IWMO → IS3S transition would flip the portfolio's factor balance from momentum-heavy to value-heavy.
+### Critical Factor Gap: ZERO Developed-World Broad Value
+- WTEM is quality/dividend growth — it screens for ROE, earnings growth, dividend quality. It is NOT a value factor fund.
+- ZPRV ($13.7k) is US small cap value — targeted but narrow (US-only, small cap only)
+- 5MVL ($1.6k) is EM value — tiny and regional
+- **There is NO developed-world broad value position in the portfolio**
+- The IWMO → IS3S transition would create the FIRST one — this is the single most impactful factor rebalance available
 
 ---
 
@@ -128,7 +131,7 @@ The IWMO → IS3S transition would flip the portfolio's factor balance from mome
 - VWCE.DE (All-World) — duplicates R4 core
 - IUSN.DE (World Small Cap, 1 share) — placeholder
 - GOOGL (dust)
-- IWDA in DEGIRO ($8.7k) — overlaps R4 core; consider redirecting DCA to ZPRV/IWVL
+- IWDA in DEGIRO ($8.7k) — overlaps R4 core; consider redirecting DCA to ZPRV or new value ETF
 
 ### Tax-Loss Harvest Candidates
 - ICGA.DE (China Large Cap) — bearish, RS -1.873
@@ -147,7 +150,7 @@ The IWMO → IS3S transition would flip the portfolio's factor balance from mome
 | Layer | Target % | Target $ | Current $ | Gap |
 |-------|----------|----------|-----------|-----|
 | Passive Core (R4 + IS3S) | 50% | $126k | $99k | $27k |
-| Factor Tilts (ZPRV, IWVL, IS3S, 5MVL) | 12% | $30k | $36k | Over by $6k |
+| Factor Tilts (ZPRV, WTEM, IS3S, 5MVL) | 12% | $30k | $36k | Over by $6k |
 | Diversifiers (gold, DBMF, miners, energy) | 12% | $30k | $2k | **-$28k** |
 | Active/Thematic (swing trades, conviction) | 8% | $20k | $0 | **-$20k** |
 | Cash/MM | 18% | $45k | $55k | Over by $10k |
