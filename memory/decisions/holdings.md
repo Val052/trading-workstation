@@ -82,11 +82,11 @@
 |------|------|--------|--------|-----------|-------------|
 | IE00B4L5Y983 | iShares Core MSCI World | IWDA/SWDA | 87 | ~$8,700 | Cap-weighted world |
 | IE00BSPLC413 | SPDR MSCI World Small Cap | ZPRS | 210 | ~$13,650 | Small cap factor |
-| IE00BZ56SW52 | iShares MSCI World Value Factor | IWVL | 205 | ~$7,600 | Value factor |
+| IE00BZ56SW52 | WisdomTree Global Quality Dividend Growth | WTEM | 205 | ~$7,600 | Quality + dividend growth factor (NOT value) |
 | IE00B4K48X80 | iShares Core MSCI Europe | IMAE/SMEA | 30 | ~$2,250 | Europe core |
 | IE00BP3QZ825 | iShares MSCI World Momentum Factor | IWMO | 20 | ~$1,800 | Momentum (same as T212) |
 
-**DEGIRO subtotal: ~$34,000** (mostly factor tilts — value, small cap, momentum)
+**DEGIRO subtotal: ~$34,000** (small cap, quality/dividend growth, momentum, cap-weighted world, Europe)
 
 ---
 
@@ -95,7 +95,7 @@
 | Category | Est. Value | % of Total |
 |----------|-----------|-----------|
 | Global Equity (cap-weighted) | ~$157,000 | 62% |
-| Factor Tilts (value, momentum, small cap) | ~$36,000 | 14% |
+| Factor Tilts (momentum, small cap, quality div growth) | ~$36,000 | 14% |
 | Regional/Thematic (China, Europe, EM) | ~$10,000 | 4% |
 | Diversifiers (gold, miners, energy) | ~$2,000 | 1% |
 | Money Market / Cash | ~$55,200 | 22% |
@@ -106,6 +106,13 @@
 - **Equities (all forms): ~$203,000 = 78%**
 - **Cash/MM: ~$55,200 = 22%**
 - **Genuine diversifiers: ~$2,000 = 1%**
+
+### Factor Exposure Breakdown
+- **Momentum:** IWMO T212 ($22.7k) + IWMO DG ($1.8k) + IEMO ($2.1k) = ~$26.6k
+- **Small Cap:** ZPRS DG ($13.7k) + IUSN T212 ($8) = ~$13.7k
+- **Quality/Div Growth:** WTEM DG ($7.6k) = ~$7.6k
+- **Value:** 5MVL T212 ($1.6k) = ~$1.6k (EM value only, NO developed world value)
+- **Cap-weighted (redundant):** IWDA DG ($8.7k) + CSPX ($4.6k) + VWCE ($1.1k) + PANX ($0.4k) = ~$14.8k
 
 ---
 
@@ -124,11 +131,17 @@
 - Note: Spain 2-month homogeneous securities rule applies
 
 ### Planned Transitions
-- IWMO.L ($22.7k) → IS3S (MSCI World Enhanced Value) — different factor indices, no homogeneous conflict expected
-- IWMO DEGIRO ($1.8k) → consider consolidating into IS3S or IWVL
+- IWMO.L T212 ($22.7k) → IS3S (MSCI World Enhanced Value) — different factor indices, no homogeneous conflict expected
+- IWMO DEGIRO ($1.8k) → consider consolidating into IS3S or selling
 - Build WGLD to 5% target (~$12.6k total, need ~$11.9k more)
 - Add DBMF UCITS (managed futures / crisis alpha) — check AUM first
 - Add AVWS (Avantis Global Small Cap Value) — when available
+
+### Key Observation: No Developed-World Value Exposure
+- WTEM (DEGIRO) is quality/dividend growth, NOT value
+- 5MVL (T212) is EM value only ($1.6k)
+- The IWMO → IS3S transition would be the FIRST meaningful developed-world value position
+- This makes the transition more important, not less
 
 ### Target Architecture (in progress)
 
